@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Svenska Flashcards</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #0e0e0e;
+    --surface: #1a1a1a;
+    --surface2: #242424;
+    --border: #333;
+    --text: #e8e3da;
+    --muted: #7a7570;
+    --accent: #c8a96e;
+    --accent2: #6e9ec8;
+    --learn: #4a7c59;
+    --practice: #7c5e4a;
+    --known: #4a5e7c;
+    --danger: #7c4a4a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    padding: 1.2rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+  }
+
+  header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    letter-spacing: 0.02em;
+    color: var(--accent);
+  }
+
+  .header-controls {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.75rem;
+    padding: 0.4rem 0.8rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.05em;
+  }
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .btn.primary { background: var(--accent); color: #0e0e0e; border-color: var(--accent); font-weight: 500; }
+  .btn.primary:hover { background: #d4b87a; }
+  .btn.danger { border-color: var(--danger); color: var(--danger); }
+  .btn.danger:hover { background: var(--danger); color: var(--text); }
+
+  .tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+  }
+  .tab {
+    padding: 0.7rem 1.2rem;
+    cursor: pointer;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+    text-transform: uppercase;
+  }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab:hover { color: var(--text); }
+
+  .main { flex: 1; padding: 1.5rem; max-width: 700px; margin: 0 auto; width: 100%; }
+
+  /* STUDY VIEW */
+  .study-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    font-size: 0.75rem;
+    color: var(--muted);
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .filter-row {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.2rem;
+    flex-wrap: wrap;
+  }
+  .filter-btn {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    padding: 0.3rem 0.7rem;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: all 0.15s;
+  }
+  .filter-btn.active-learn { border-color: var(--learn); color: #6db88a; background: rgba(74,124,89,0.15); }
+  .filter-btn.active-practice { border-color: var(--practice); color: #c8936e; background: rgba(124,94,74,0.15); }
+  .filter-btn.active-all { border-color: var(--accent); color: var(--accent); background: rgba(200,169,110,0.1); }
+
+  .card-wrap {
+    perspective: 1000px;
+    margin-bottom: 1.2rem;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    min-height: 220px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    cursor: pointer;
+    position: relative;
+    transition: border-color 0.2s, transform 0.1s;
+    text-align: center;
+  }
+  .card:hover { border-color: var(--accent); }
+  .card:active { transform: scale(0.99); }
+
+  .card-type-badge {
+    position: absolute;
+    top: 0.7rem;
+    left: 0.7rem;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .card-direction {
+    position: absolute;
+    top: 0.7rem;
+    right: 0.7rem;
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+    padding: 0.2rem 0.5rem;
+    border: 1px solid;
+  }
+  .dir-learn { border-color: var(--learn); color: #6db88a; }
+  .dir-practice { border-color: var(--practice); color: #c8936e; }
+
+  .card-prompt {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    font-weight: 400;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+  }
+  .card-prompt.grammar { font-size: 1.1rem; font-style: italic; }
+
+  .card-hint { font-size: 0.7rem; color: var(--muted); margin-top: 0.5rem; }
+
+  .card-answer {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    width: 100%;
+    text-align: center;
+  }
+  .answer-text {
+    font-size: 1.1rem;
+    color: var(--accent);
+    font-family: 'Playfair Display', serif;
+  }
+  .answer-text.grammar { font-size: 0.9rem; font-family: 'IBM Plex Mono', monospace; color: var(--accent2); }
+  .answer-note { font-size: 0.7rem; color: var(--muted); margin-top: 0.4rem; font-style: italic; }
+
+  .card-actions {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 1.2rem;
+  }
+
+  .btn-correct { background: rgba(74,124,89,0.2); border-color: var(--learn); color: #6db88a; }
+  .btn-correct:hover { background: rgba(74,124,89,0.4); color: #6db88a; }
+  .btn-wrong { background: rgba(124,74,74,0.2); border-color: var(--danger); color: #c88a8a; }
+  .btn-wrong:hover { background: rgba(124,74,74,0.4); color: #c88a8a; }
+
+  .progress-bar-wrap {
+    background: var(--surface2);
+    height: 3px;
+    margin-bottom: 1.5rem;
+  }
+  .progress-bar { height: 100%; background: var(--accent); transition: width 0.3s; }
+
+  .empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--muted);
+    font-size: 0.85rem;
+    line-height: 1.8;
+  }
+
+  /* MANAGE VIEW */
+  .stats-row {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+  .stat-box {
+    flex: 1;
+    min-width: 80px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 0.8rem;
+    text-align: center;
+  }
+  .stat-num { font-family: 'Playfair Display', serif; font-size: 1.8rem; color: var(--accent); }
+  .stat-label { font-size: 0.65rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-top: 0.2rem; }
+
+  .card-list { display: flex; flex-direction: column; gap: 0.5rem; }
+
+  .card-row {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 0.7rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+  }
+
+  .card-row-text { flex: 1; min-width: 150px; }
+  .card-row-sv { font-size: 0.9rem; color: var(--text); }
+  .card-row-en { font-size: 0.75rem; color: var(--muted); margin-top: 0.15rem; }
+
+  .status-dot {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+  }
+  .dot-learning { background: #6db88a; }
+  .dot-practice { background: #c8936e; }
+  .dot-known { background: #6e9ec8; }
+
+  .card-row-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+
+  .mini-btn {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    padding: 0.2rem 0.5rem;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: all 0.15s;
+  }
+  .mini-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .mini-btn.del:hover { border-color: var(--danger); color: #c88a8a; }
+
+  .section-title {
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 1.5rem 0 0.7rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ADD CARD FORM */
+  .add-form {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 1.2rem;
+    margin-bottom: 1.5rem;
+  }
+  .add-form h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    color: var(--accent);
+    font-weight: 400;
+  }
+  .form-row { display: flex; gap: 0.7rem; flex-wrap: wrap; margin-bottom: 0.7rem; }
+  .form-field { flex: 1; min-width: 120px; display: flex; flex-direction: column; gap: 0.3rem; }
+  .form-field label { font-size: 0.65rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+  .form-field input, .form-field select, .form-field textarea {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.85rem;
+    padding: 0.5rem 0.7rem;
+    outline: none;
+    transition: border-color 0.15s;
+    width: 100%;
+  }
+  .form-field input:focus, .form-field textarea:focus { border-color: var(--accent); }
+  .form-field textarea { resize: vertical; min-height: 60px; }
+
+  /* GIST CONFIG */
+  .gist-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 1.2rem;
+    margin-bottom: 1.5rem;
+  }
+  .gist-section h3 { font-family: 'Playfair Display', serif; font-size: 1rem; color: var(--accent); font-weight: 400; margin-bottom: 0.5rem; }
+  .gist-section p { font-size: 0.75rem; color: var(--muted); line-height: 1.7; margin-bottom: 0.8rem; }
+  .gist-status { font-size: 0.7rem; margin-top: 0.5rem; padding: 0.3rem 0.6rem; border: 1px solid; display: inline-block; }
+  .status-ok { border-color: var(--learn); color: #6db88a; }
+  .status-err { border-color: var(--danger); color: #c88a8a; }
+  .status-none { border-color: var(--border); color: var(--muted); }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.75);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 100;
+    padding: 1rem;
+  }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 1.5rem;
+    max-width: 400px;
+    width: 100%;
+  }
+  .modal h3 { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--accent); margin-bottom: 0.8rem; font-weight: 400; }
+  .modal p { font-size: 0.8rem; color: var(--muted); line-height: 1.7; margin-bottom: 1rem; }
+  .modal-actions { display: flex; gap: 0.6rem; justify-content: flex-end; }
+
+  .toast {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--surface2);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-size: 0.75rem;
+    padding: 0.5rem 1rem;
+    letter-spacing: 0.05em;
+    z-index: 200;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+
+  .streak-badge {
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+  .streak-badge span { color: var(--accent); }
+
+  .hidden { display: none !important; }
+
+  select {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.75rem;
+    padding: 0.3rem 0.6rem;
+    cursor: pointer;
+    outline: none;
+  }
+
+  .type-toggle { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+  .type-label { font-size: 0.7rem; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Svenska Flashcards</h1>
+  <div class="header-controls">
+    <button class="btn" onclick="openGistConfig()">⚙ Sync</button>
+    <button class="btn primary" onclick="saveToGist()">↑ Save</button>
+  </div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('study')" id="tab-study">Study</div>
+  <div class="tab" onclick="switchTab('manage')" id="tab-manage">Manage</div>
+  <div class="tab" onclick="switchTab('add')" id="tab-add">+ Add</div>
+</div>
+
+<div class="main">
+
+  <!-- STUDY TAB -->
+  <div id="view-study">
+    <div class="study-header">
+      <div class="type-toggle">
+        <span class="type-label">Mode:</span>
+        <select id="type-filter" onchange="resetStudySession()">
+          <option value="all">All cards</option>
+          <option value="vocab">Vocab only</option>
+          <option value="grammar">Grammar only</option>
+        </select>
+      </div>
+      <div id="session-info" class="streak-badge">— cards in queue</div>
+    </div>
+
+    <div class="filter-row">
+      <button class="filter-btn active-all" id="fb-all" onclick="setStageFilter('all')">All active</button>
+      <button class="filter-btn" id="fb-learning" onclick="setStageFilter('learning')">Learning</button>
+      <button class="filter-btn" id="fb-practice" onclick="setStageFilter('practice')">Practicing</button>
+    </div>
+
+    <div class="progress-bar-wrap">
+      <div class="progress-bar" id="progress-bar" style="width:0%"></div>
+    </div>
+
+    <div id="card-area">
+      <div class="card-wrap" id="card-display">
+        <div class="card" onclick="revealAnswer()" id="main-card">
+          <div class="card-type-badge" id="card-type-badge"></div>
+          <div class="card-direction" id="card-dir-badge"></div>
+          <div class="card-prompt" id="card-prompt">Loading...</div>
+          <div class="card-hint" id="card-hint">tap to reveal</div>
+          <div class="card-answer hidden" id="card-answer">
+            <div class="answer-text" id="answer-text"></div>
+            <div class="answer-note" id="answer-note"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-actions hidden" id="answer-actions">
+        <button class="btn btn-wrong" onclick="markCard(false)">✗ Wrong</button>
+        <button class="btn btn-correct" onclick="markCard(true)">✓ Got it</button>
+      </div>
+
+      <div class="empty-state hidden" id="empty-state">
+        No cards in this filter.<br>
+        Change filter above, or add new cards in the Add tab.
+      </div>
+    </div>
+  </div>
+
+  <!-- MANAGE TAB -->
+  <div id="view-manage" class="hidden">
+    <div class="stats-row" id="stats-row"></div>
+
+    <div id="manage-lists"></div>
+  </div>
+
+  <!-- ADD TAB -->
+  <div id="view-add" class="hidden">
+    <div class="add-form">
+      <h3>Add vocab card</h3>
+      <div class="form-row">
+        <div class="form-field">
+          <label>Swedish</label>
+          <input type="text" id="new-sv" placeholder="e.g. hängmatta">
+        </div>
+        <div class="form-field">
+          <label>English</label>
+          <input type="text" id="new-en" placeholder="e.g. hammock">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label>Note (optional)</label>
+          <input type="text" id="new-note" placeholder="e.g. en-word, compound noun">
+        </div>
+      </div>
+      <button class="btn primary" onclick="addVocabCard()">Add vocab card</button>
+    </div>
+
+    <div class="add-form">
+      <h3>Add grammar card</h3>
+      <div class="form-row">
+        <div class="form-field">
+          <label>Concept / Rule</label>
+          <input type="text" id="new-gr-front" placeholder="e.g. brukar + verb">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label>Explanation</label>
+          <textarea id="new-gr-back" placeholder="e.g. brukar always takes infinitive: jag brukar sova"></textarea>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label>Example (optional)</label>
+          <input type="text" id="new-gr-example" placeholder="e.g. jag brukar sova tidigt">
+        </div>
+      </div>
+      <button class="btn primary" onclick="addGrammarCard()">Add grammar card</button>
+    </div>
+  </div>
+
+</div><!-- end main -->
+
+<!-- GIST CONFIG MODAL -->
+<div class="modal-overlay hidden" id="gist-modal">
+  <div class="modal">
+    <h3>Gist Sync Setup</h3>
+    <p>To save your cards across sessions, you need a GitHub Personal Access Token and a Gist ID. See setup instructions below.</p>
+    <div class="form-row">
+      <div class="form-field">
+        <label>GitHub Token</label>
+        <input type="password" id="gist-token-input" placeholder="ghp_...">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-field">
+        <label>Gist ID</label>
+        <input type="text" id="gist-id-input" placeholder="abc123def456...">
+      </div>
+    </div>
+    <div id="gist-status-display"></div>
+    <div class="modal-actions" style="margin-top:1rem;">
+      <button class="btn" onclick="closeGistModal()">Cancel</button>
+      <button class="btn primary" onclick="saveGistConfig()">Save & Test</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRM MODAL -->
+<div class="modal-overlay hidden" id="delete-modal">
+  <div class="modal">
+    <h3>Delete card?</h3>
+    <p id="delete-modal-text">This cannot be undone.</p>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeDeleteModal()">Cancel</button>
+      <button class="btn danger" onclick="confirmDelete()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+
+const DEFAULT_CARDS = [
+  // VOCAB - format: { id, type:'vocab', sv, en, note, stage:'learning'|'practice'|'known', streak:0 }
+  {id:'v001',type:'vocab',sv:'öva / övning',en:'to practice / practice',note:'',stage:'learning',streak:0},
+  {id:'v002',type:'vocab',sv:'sätt',en:'way, manner',note:'',stage:'learning',streak:0},
+  {id:'v003',type:'vocab',sv:'vardagligt',en:'everyday, colloquial',note:'',stage:'learning',streak:0},
+  {id:'v004',type:'vocab',sv:'brett',en:'broad, wide',note:'',stage:'learning',streak:0},
+  {id:'v005',type:'vocab',sv:'dit / där',en:'there (toward) / there (location)',note:'motion vs stationary',stage:'learning',streak:0},
+  {id:'v006',type:'vocab',sv:'hit / här',en:'here (toward) / here (location)',note:'motion vs stationary',stage:'learning',streak:0},
+  {id:'v007',type:'vocab',sv:'ska / borde / måste',en:'shall / should / must',note:'modal verbs, take infinitive after',stage:'learning',streak:0},
+  {id:'v008',type:'vocab',sv:'sova',en:'to sleep',note:'infinitive; imperativ: sov!',stage:'learning',streak:0},
+  {id:'v009',type:'vocab',sv:'slåss',en:'to fight',note:'',stage:'learning',streak:0},
+  {id:'v010',type:'vocab',sv:'backar',en:'backs down',note:'present tense',stage:'learning',streak:0},
+  {id:'v011',type:'vocab',sv:'backa',en:'to back up / reverse',note:'infinitive',stage:'learning',streak:0},
+  {id:'v012',type:'vocab',sv:'skadat',en:'injured',note:'',stage:'learning',streak:0},
+  {id:'v013',type:'vocab',sv:'redo / beredd',en:'ready / prepared',note:'',stage:'learning',streak:0},
+  {id:'v014',type:'vocab',sv:'tält',en:'tent',note:'ett-word',stage:'learning',streak:0},
+  {id:'v015',type:'vocab',sv:'sovsäck',en:'sleeping bag',note:'en-word',stage:'learning',streak:0},
+  {id:'v016',type:'vocab',sv:'hängmatta',en:'hammock',note:'en-word',stage:'learning',streak:0},
+  {id:'v017',type:'vocab',sv:'hängmattaställning',en:'hammock stand',note:'compound noun',stage:'learning',streak:0},
+  {id:'v018',type:'vocab',sv:'myggnät',en:'bug net',note:'',stage:'learning',streak:0},
+  {id:'v019',type:'vocab',sv:'tarp / presenning',en:'tarp',note:'',stage:'learning',streak:0},
+  {id:'v020',type:'vocab',sv:'remmar / rem',en:'straps / strap',note:'',stage:'learning',streak:0},
+  {id:'v021',type:'vocab',sv:'fallskärmssnöre / paracord',en:'paracord',note:'',stage:'learning',streak:0},
+  {id:'v022',type:'vocab',sv:'paviljong',en:'gazebo / canopy shelter',note:'',stage:'learning',streak:0},
+  {id:'v023',type:'vocab',sv:'lägerelden',en:'the campfire',note:'definite form',stage:'learning',streak:0},
+  {id:'v024',type:'vocab',sv:'filt',en:'blanket',note:'',stage:'learning',streak:0},
+  {id:'v025',type:'vocab',sv:'rep',en:'rope',note:'ett-word',stage:'learning',streak:0},
+  {id:'v026',type:'vocab',sv:'påse',en:'bag / pouch (soft)',note:'en-word; contrast with väska',stage:'learning',streak:0},
+  {id:'v027',type:'vocab',sv:'väska',en:'bag (structured)',note:'en-word; contrast with påse',stage:'learning',streak:0},
+  {id:'v028',type:'vocab',sv:'käpp',en:'stick / cane',note:'',stage:'learning',streak:0},
+  {id:'v029',type:'vocab',sv:'pinne',en:'twig / peg',note:'',stage:'learning',streak:0},
+  {id:'v030',type:'vocab',sv:'ras',en:'breed / race',note:'',stage:'learning',streak:0},
+  {id:'v031',type:'vocab',sv:'snäll',en:'nice, well-behaved',note:'',stage:'learning',streak:0},
+  {id:'v032',type:'vocab',sv:'ensam',en:'alone',note:'',stage:'learning',streak:0},
+  {id:'v033',type:'vocab',sv:'rejält',en:'substantial, solid',note:'',stage:'learning',streak:0},
+  {id:'v034',type:'vocab',sv:'beläggning',en:'coating',note:'',stage:'learning',streak:0},
+  {id:'v035',type:'vocab',sv:'mestadels',en:'mostly',note:'',stage:'learning',streak:0},
+  {id:'v036',type:'vocab',sv:'tur',en:'luck',note:'',stage:'learning',streak:0},
+  {id:'v037',type:'vocab',sv:'förlåtande',en:'forgiving',note:'',stage:'learning',streak:0},
+  {id:'v038',type:'vocab',sv:'pålitligt',en:'reliable',note:'',stage:'learning',streak:0},
+  {id:'v039',type:'vocab',sv:'nog',en:'enough / probably',note:'context-dependent meaning',stage:'learning',streak:0},
+  {id:'v040',type:'vocab',sv:'vistas',en:'to spend time / dwell',note:'reflexive verb',stage:'learning',streak:0},
+  {id:'v041',type:'vocab',sv:'inomhus',en:'indoors',note:'',stage:'learning',streak:0},
+  {id:'v042',type:'vocab',sv:'öser ner',en:'pours down',note:'',stage:'learning',streak:0},
+  {id:'v043',type:'vocab',sv:'föredrar',en:'prefer',note:'present tense',stage:'learning',streak:0},
+  {id:'v044',type:'vocab',sv:'kärnan',en:'the core, kernel',note:'definite form',stage:'learning',streak:0},
+  {id:'v045',type:'vocab',sv:'nörd',en:'nerd',note:'',stage:'learning',streak:0},
+  {id:'v046',type:'vocab',sv:'råkar / råkade',en:'happens to / happened to',note:'incidental/accidental action',stage:'learning',streak:0},
+  {id:'v047',type:'vocab',sv:'sammansatta',en:'compound',note:'e.g. sammansatta ord = compound words',stage:'learning',streak:0},
+  {id:'v048',type:'vocab',sv:'genomskinliga',en:'transparent, see-through',note:'',stage:'learning',streak:0},
+  {id:'v049',type:'vocab',sv:'gömmer',en:'hides',note:'present tense',stage:'learning',streak:0},
+  {id:'v050',type:'vocab',sv:'åldersspridning',en:'age spread',note:'compound noun',stage:'learning',streak:0},
+  {id:'v051',type:'vocab',sv:'säkert',en:'certainly / probably',note:'context-dependent like nog',stage:'learning',streak:0},
+  {id:'v052',type:'vocab',sv:'livligt',en:'lively',note:'',stage:'learning',streak:0},
+  {id:'v053',type:'vocab',sv:'kontrollera',en:'to check / inspect',note:'',stage:'learning',streak:0},
+  {id:'v054',type:'vocab',sv:'justera',en:'to adjust',note:'',stage:'learning',streak:0},
+  {id:'v055',type:'vocab',sv:'höjden',en:'the height',note:'definite form',stage:'learning',streak:0},
+  {id:'v056',type:'vocab',sv:'karabinkrokar',en:'carabiner hooks',note:'plural',stage:'learning',streak:0},
+  {id:'v057',type:'vocab',sv:'lutning',en:'slope / angle / tilt',note:'',stage:'learning',streak:0},
+  {id:'v058',type:'vocab',sv:'samlas',en:'to collect / gather',note:'reflexive verb',stage:'learning',streak:0},
+  {id:'v059',type:'vocab',sv:'sträcka',en:'to stretch',note:'',stage:'learning',streak:0},
+  {id:'v060',type:'vocab',sv:'svagheten',en:'the weakness',note:'definite form',stage:'learning',streak:0},
+  {id:'v061',type:'vocab',sv:'snabbare',en:'faster',note:'comparative',stage:'learning',streak:0},
+  {id:'v062',type:'vocab',sv:'trasig',en:'broken',note:'',stage:'learning',streak:0},
+  {id:'v063',type:'vocab',sv:'lägre',en:'lower',note:'comparative',stage:'learning',streak:0},
+  {id:'v064',type:'vocab',sv:'vald / valda',en:'chosen / the chosen',note:'',stage:'learning',streak:0},
+  {id:'v065',type:'vocab',sv:'byta ämne',en:'to change subject',note:'phrase',stage:'learning',streak:0},
+  {id:'v066',type:'vocab',sv:'ämne',en:'subject / topic',note:'',stage:'learning',streak:0},
+  {id:'v067',type:'vocab',sv:'förresten',en:'by the way, incidentally',note:'',stage:'learning',streak:0},
+  {id:'v068',type:'vocab',sv:'pedantisk',en:'pedantic',note:'',stage:'learning',streak:0},
+  {id:'v069',type:'vocab',sv:'jätte-',en:'very / super (prefix)',note:'always attached: jättebra, jättepedantisk',stage:'learning',streak:0},
+  {id:'v070',type:'vocab',sv:'eget / egen',en:'own',note:'eget = ett-word, egen = en-word',stage:'learning',streak:0},
+  {id:'v071',type:'vocab',sv:'ta hand om',en:'to take care of',note:'phrase',stage:'learning',streak:0},
+  {id:'v072',type:'vocab',sv:'igenom',en:'through',note:'one word — not "i genom"',stage:'learning',streak:0},
+
+  // GRAMMAR CARDS - format: { id, type:'grammar', front, back, example, stage, streak }
+  {id:'g001',type:'grammar',front:'brukar + verb form',back:'brukar always takes infinitive',example:'jag brukar sova — NOT jag brukar sover',stage:'learning',streak:0},
+  {id:'g002',type:'grammar',front:'Modal verbs (ska/borde/måste/kan/vill)',back:'all take infinitive after them',example:'jag måste sova, hon vill äta',stage:'learning',streak:0},
+  {id:'g003',type:'grammar',front:'Imperativ (command form)',back:'drop the -a from infinitive',example:'sova → sov!  använda → använd!',stage:'learning',streak:0},
+  {id:'g004',type:'grammar',front:'Conditional: hypothetical situations',back:'Use bodde + skulle instead of bor + ska',example:'Om jag bodde i skogen skulle jag vara glad',stage:'learning',streak:0},
+  {id:'g005',type:'grammar',front:'Negation word order',back:'"inte" comes directly after verb',example:'han backar inte — NOT han inte backar',stage:'learning',streak:0},
+  {id:'g006',type:'grammar',front:'dit vs där',back:'dit = motion toward; där = stationary location',example:'Jag går dit. Jag är där.',stage:'learning',streak:0},
+  {id:'g007',type:'grammar',front:'hit vs här',back:'hit = motion toward here; här = stationary here',example:'Kom hit! Jag är här.',stage:'learning',streak:0},
+  {id:'g008',type:'grammar',front:'sin/sitt/sina vs hans/hennes',back:'sin/sitt/sina = subject\'s own; hans/hennes = someone else\'s',example:'Han tar sin hund (his own) vs han tar hans hund (someone else\'s)',stage:'learning',streak:0},
+  {id:'g009',type:'grammar',front:'ett-ord vs en-ord: key examples',back:'ett: tält, hus, rep, träd / en: hund, plats, rem, påse, hängmatta, sovsäck, tarp',example:'',stage:'learning',streak:0},
+  {id:'g010',type:'grammar',front:'påse vs väska',back:'påse = soft bag/pouch; väska = structured bag',example:'en påse chips vs en handväska',stage:'learning',streak:0},
+  {id:'g011',type:'grammar',front:'nog — two meanings',back:'nog = enough OR probably, depending on context',example:'Det räcker nog (that\'s probably enough)',stage:'learning',streak:0},
+  {id:'g012',type:'grammar',front:'säkert — two meanings',back:'säkert = certainly OR probably, context-dependent (like nog)',example:'Det är säkert bra (it\'s probably/certainly fine)',stage:'learning',streak:0},
+];
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+
+let cards = [];
+let queue = [];
+let currentIdx = 0;
+let revealed = false;
+let stageFilter = 'all';
+let pendingDeleteId = null;
+let gistToken = '';
+let gistId = '';
+
+const CORRECT_TO_ADVANCE = 3; // streaks needed to move stage
+
+function loadState() {
+  const saved = localStorage.getItem('sv_cards');
+  if (saved) {
+    try { cards = JSON.parse(saved); } catch(e) { cards = [...DEFAULT_CARDS]; }
+  } else {
+    cards = JSON.parse(JSON.stringify(DEFAULT_CARDS));
+  }
+  gistToken = localStorage.getItem('sv_gist_token') || '';
+  gistId = localStorage.getItem('sv_gist_id') || '';
+}
+
+function saveState() {
+  localStorage.setItem('sv_cards', JSON.stringify(cards));
+}
+
+function getCard(id) { return cards.find(c => c.id === id); }
+
+function genId(prefix) {
+  return prefix + Date.now().toString(36);
+}
+
+// ── STUDY LOGIC ───────────────────────────────────────────────────────────────
+
+function buildQueue() {
+  const typeFilter = document.getElementById('type-filter').value;
+  queue = cards.filter(c => {
+    if (c.stage === 'known') return false;
+    if (stageFilter === 'learning' && c.stage !== 'learning') return false;
+    if (stageFilter === 'practice' && c.stage !== 'practice') return false;
+    if (typeFilter === 'vocab' && c.type !== 'vocab') return false;
+    if (typeFilter === 'grammar' && c.type !== 'grammar') return false;
+    return true;
+  });
+  // shuffle
+  for (let i = queue.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [queue[i], queue[j]] = [queue[j], queue[i]];
+  }
+  currentIdx = 0;
+}
+
+function resetStudySession() {
+  buildQueue();
+  showCurrentCard();
+}
+
+function setStageFilter(f) {
+  stageFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => {
+    b.className = 'filter-btn';
+  });
+  if (f === 'all') document.getElementById('fb-all').classList.add('active-all');
+  else if (f === 'learning') document.getElementById('fb-learning').classList.add('active-learn');
+  else if (f === 'practice') document.getElementById('fb-practice').classList.add('active-practice');
+  resetStudySession();
+}
+
+function showCurrentCard() {
+  const totalActive = cards.filter(c => {
+    const typeFilter = document.getElementById('type-filter').value;
+    if (c.stage === 'known') return false;
+    if (typeFilter === 'vocab' && c.type !== 'vocab') return false;
+    if (typeFilter === 'grammar' && c.type !== 'grammar') return false;
+    return true;
+  }).length;
+
+  document.getElementById('session-info').innerHTML =
+    `<span>${queue.length - currentIdx}</span> remaining · <span>${totalActive}</span> active total`;
+
+  if (queue.length === 0 || currentIdx >= queue.length) {
+    document.getElementById('card-display').classList.add('hidden');
+    document.getElementById('answer-actions').classList.add('hidden');
+    document.getElementById('empty-state').classList.remove('hidden');
+    document.getElementById('progress-bar').style.width = '100%';
+    return;
+  }
+
+  document.getElementById('card-display').classList.remove('hidden');
+  document.getElementById('empty-state').classList.add('hidden');
+
+  const done = currentIdx;
+  const total = queue.length;
+  document.getElementById('progress-bar').style.width = (done / total * 100) + '%';
+
+  const card = queue[currentIdx];
+  revealed = false;
+
+  document.getElementById('card-answer').classList.add('hidden');
+  document.getElementById('answer-actions').classList.add('hidden');
+  document.getElementById('card-hint').classList.remove('hidden');
+
+  if (card.type === 'vocab') {
+    const isLearning = card.stage === 'learning';
+    const prompt = isLearning ? card.sv : card.en;
+    const answer = isLearning ? card.en : card.sv;
+
+    document.getElementById('card-type-badge').textContent = 'vocab';
+    document.getElementById('card-dir-badge').textContent = isLearning ? 'sv → en' : 'en → sv';
+    document.getElementById('card-dir-badge').className = 'card-direction ' + (isLearning ? 'dir-learn' : 'dir-practice');
+    document.getElementById('card-prompt').textContent = prompt;
+    document.getElementById('card-prompt').className = 'card-prompt';
+    document.getElementById('answer-text').textContent = answer;
+    document.getElementById('answer-text').className = 'answer-text';
+    document.getElementById('answer-note').textContent = card.note || '';
+
+  } else {
+    // grammar — always front→back
+    document.getElementById('card-type-badge').textContent = 'grammar';
+    document.getElementById('card-dir-badge').textContent = 'rule';
+    document.getElementById('card-dir-badge').className = 'card-direction dir-learn';
+    document.getElementById('card-prompt').textContent = card.front;
+    document.getElementById('card-prompt').className = 'card-prompt grammar';
+    document.getElementById('answer-text').textContent = card.back;
+    document.getElementById('answer-text').className = 'answer-text grammar';
+    document.getElementById('answer-note').textContent = card.example || '';
+  }
+}
+
+function revealAnswer() {
+  if (revealed) return;
+  revealed = true;
+  document.getElementById('card-answer').classList.remove('hidden');
+  document.getElementById('answer-actions').classList.remove('hidden');
+  document.getElementById('card-hint').classList.add('hidden');
+}
+
+function markCard(correct) {
+  const card = queue[currentIdx];
+  const c = getCard(card.id);
+  if (!c) { currentIdx++; showCurrentCard(); return; }
+
+  if (correct) {
+    c.streak = (c.streak || 0) + 1;
+    if (c.type === 'vocab') {
+      if (c.stage === 'learning' && c.streak >= CORRECT_TO_ADVANCE) {
+        c.stage = 'practice';
+        c.streak = 0;
+        showToast('Promoted to Practicing ↑');
+      } else if (c.stage === 'practice' && c.streak >= CORRECT_TO_ADVANCE) {
+        c.stage = 'known';
+        c.streak = 0;
+        showToast('Marked as Known ✓');
+      }
+    } else {
+      // grammar: single stage, just track streak
+      if (c.streak >= CORRECT_TO_ADVANCE) {
+        c.stage = 'known';
+        c.streak = 0;
+        showToast('Grammar rule locked in ✓');
+      }
+    }
+  } else {
+    c.streak = 0;
+    // if in practice, don't demote automatically — user can do that manually
+  }
+
+  saveState();
+  currentIdx++;
+  showCurrentCard();
+}
+
+// ── MANAGE VIEW ───────────────────────────────────────────────────────────────
+
+function renderManage() {
+  // stats
+  const learning = cards.filter(c => c.stage === 'learning').length;
+  const practice = cards.filter(c => c.stage === 'practice').length;
+  const known = cards.filter(c => c.stage === 'known').length;
+  document.getElementById('stats-row').innerHTML = `
+    <div class="stat-box"><div class="stat-num" style="color:#6db88a">${learning}</div><div class="stat-label">Learning</div></div>
+    <div class="stat-box"><div class="stat-num" style="color:#c8936e">${practice}</div><div class="stat-label">Practicing</div></div>
+    <div class="stat-box"><div class="stat-num" style="color:#6e9ec8">${known}</div><div class="stat-label">Known</div></div>
+    <div class="stat-box"><div class="stat-num">${cards.length}</div><div class="stat-label">Total</div></div>
+  `;
+
+  // grouped lists
+  const groups = [
+    { label: 'Known', stage: 'known', dot: 'dot-known' },
+    { label: 'Practicing (en→sv)', stage: 'practice', dot: 'dot-practice' },
+    { label: 'Learning (sv→en)', stage: 'learning', dot: 'dot-learning' },
+  ];
+
+  let html = '';
+  for (const g of groups) {
+    const group = cards.filter(c => c.stage === g.stage);
+    if (group.length === 0) continue;
+    html += `<div class="section-title">${g.label} (${group.length})</div><div class="card-list">`;
+    for (const c of group) {
+      const left = c.type === 'vocab'
+        ? `<div class="card-row-sv">${c.sv}</div><div class="card-row-en">${c.en}</div>`
+        : `<div class="card-row-sv">${c.front}</div><div class="card-row-en">${c.back.substring(0,60)}${c.back.length>60?'…':''}</div>`;
+
+      const demoteBtn = c.stage !== 'learning'
+        ? `<button class="mini-btn" onclick="demoteCard('${c.id}')">↓ demote</button>` : '';
+      const promoteBtn = c.stage !== 'known'
+        ? `<button class="mini-btn" onclick="promoteCard('${c.id}')">↑ promote</button>` : '';
+      const resetBtn = `<button class="mini-btn" onclick="resetCard('${c.id}')">↺ reset</button>`;
+      const delBtn = `<button class="mini-btn del" onclick="askDelete('${c.id}')">✕</button>`;
+
+      html += `<div class="card-row">
+        <div class="status-dot ${g.dot}"></div>
+        <div class="card-row-text">${left}</div>
+        <div class="card-row-actions">${demoteBtn}${promoteBtn}${resetBtn}${delBtn}</div>
+      </div>`;
+    }
+    html += '</div>';
+  }
+  document.getElementById('manage-lists').innerHTML = html || '<div class="empty-state">No cards yet.</div>';
+}
+
+function demoteCard(id) {
+  const c = getCard(id);
+  if (!c) return;
+  if (c.stage === 'known') { c.stage = 'practice'; c.streak = 0; }
+  else if (c.stage === 'practice') { c.stage = 'learning'; c.streak = 0; }
+  saveState();
+  renderManage();
+  showToast('Card demoted');
+}
+
+function promoteCard(id) {
+  const c = getCard(id);
+  if (!c) return;
+  if (c.stage === 'learning') { c.stage = 'practice'; c.streak = 0; }
+  else if (c.stage === 'practice') { c.stage = 'known'; c.streak = 0; }
+  saveState();
+  renderManage();
+  showToast('Card promoted');
+}
+
+function resetCard(id) {
+  const c = getCard(id);
+  if (!c) return;
+  c.stage = 'learning';
+  c.streak = 0;
+  saveState();
+  renderManage();
+  showToast('Card reset to Learning');
+}
+
+function askDelete(id) {
+  pendingDeleteId = id;
+  const c = getCard(id);
+  document.getElementById('delete-modal-text').textContent =
+    c ? `Delete "${c.type === 'vocab' ? c.sv : c.front}"? This cannot be undone.` : 'Delete this card?';
+  document.getElementById('delete-modal').classList.remove('hidden');
+}
+
+function closeDeleteModal() {
+  pendingDeleteId = null;
+  document.getElementById('delete-modal').classList.add('hidden');
+}
+
+function confirmDelete() {
+  if (!pendingDeleteId) return;
+  cards = cards.filter(c => c.id !== pendingDeleteId);
+  saveState();
+  closeDeleteModal();
+  renderManage();
+  showToast('Card deleted');
+}
+
+// ── ADD CARDS ─────────────────────────────────────────────────────────────────
+
+function addVocabCard() {
+  const sv = document.getElementById('new-sv').value.trim();
+  const en = document.getElementById('new-en').value.trim();
+  const note = document.getElementById('new-note').value.trim();
+  if (!sv || !en) { showToast('Need both Swedish and English'); return; }
+  cards.push({ id: genId('v'), type: 'vocab', sv, en, note, stage: 'learning', streak: 0 });
+  saveState();
+  document.getElementById('new-sv').value = '';
+  document.getElementById('new-en').value = '';
+  document.getElementById('new-note').value = '';
+  showToast('Card added');
+}
+
+function addGrammarCard() {
+  const front = document.getElementById('new-gr-front').value.trim();
+  const back = document.getElementById('new-gr-back').value.trim();
+  const example = document.getElementById('new-gr-example').value.trim();
+  if (!front || !back) { showToast('Need concept and explanation'); return; }
+  cards.push({ id: genId('g'), type: 'grammar', front, back, example, stage: 'learning', streak: 0 });
+  saveState();
+  document.getElementById('new-gr-front').value = '';
+  document.getElementById('new-gr-back').value = '';
+  document.getElementById('new-gr-example').value = '';
+  showToast('Grammar card added');
+}
+
+// ── GIST SYNC ─────────────────────────────────────────────────────────────────
+
+function openGistConfig() {
+  document.getElementById('gist-token-input').value = gistToken;
+  document.getElementById('gist-id-input').value = gistId;
+  document.getElementById('gist-status-display').innerHTML =
+    gistToken && gistId
+      ? '<div class="gist-status status-ok">Credentials saved</div>'
+      : '<div class="gist-status status-none">Not configured</div>';
+  document.getElementById('gist-modal').classList.remove('hidden');
+}
+
+function closeGistModal() {
+  document.getElementById('gist-modal').classList.add('hidden');
+}
+
+function saveGistConfig() {
+  gistToken = document.getElementById('gist-token-input').value.trim();
+  gistId = document.getElementById('gist-id-input').value.trim();
+  localStorage.setItem('sv_gist_token', gistToken);
+  localStorage.setItem('sv_gist_id', gistId);
+  testGistConnection();
+}
+
+async function testGistConnection() {
+  if (!gistToken || !gistId) {
+    document.getElementById('gist-status-display').innerHTML =
+      '<div class="gist-status status-err">Missing token or Gist ID</div>';
+    return;
+  }
+  try {
+    const r = await fetch(`https://api.github.com/gists/${gistId}`, {
+      headers: { Authorization: `token ${gistToken}` }
+    });
+    if (r.ok) {
+      document.getElementById('gist-status-display').innerHTML =
+        '<div class="gist-status status-ok">Connected ✓</div>';
+      showToast('Gist connected');
+    } else {
+      document.getElementById('gist-status-display').innerHTML =
+        '<div class="gist-status status-err">Connection failed — check token/ID</div>';
+    }
+  } catch(e) {
+    document.getElementById('gist-status-display').innerHTML =
+      '<div class="gist-status status-err">Network error</div>';
+  }
+}
+
+async function saveToGist() {
+  if (!gistToken || !gistId) {
+    showToast('Set up Gist sync first (⚙ Sync)');
+    return;
+  }
+  try {
+    const r = await fetch(`https://api.github.com/gists/${gistId}`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `token ${gistToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        files: { 'svenska-flashcards.json': { content: JSON.stringify(cards, null, 2) } }
+      })
+    });
+    if (r.ok) showToast('Saved to Gist ✓');
+    else showToast('Save failed — check credentials');
+  } catch(e) {
+    showToast('Network error');
+  }
+}
+
+async function loadFromGist() {
+  if (!gistToken || !gistId) return;
+  try {
+    const r = await fetch(`https://api.github.com/gists/${gistId}`, {
+      headers: { Authorization: `token ${gistToken}` }
+    });
+    if (!r.ok) return;
+    const data = await r.json();
+    const file = data.files['svenska-flashcards.json'];
+    if (file && file.content) {
+      const loaded = JSON.parse(file.content);
+      cards = loaded;
+      saveState();
+      showToast('Loaded from Gist ✓');
+    }
+  } catch(e) {}
+}
+
+// ── TABS ──────────────────────────────────────────────────────────────────────
+
+function switchTab(tab) {
+  ['study','manage','add'].forEach(t => {
+    document.getElementById('view-' + t).classList.toggle('hidden', t !== tab);
+    document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+  });
+  if (tab === 'manage') renderManage();
+  if (tab === 'study') showCurrentCard();
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+
+loadState();
+if (gistToken && gistId) {
+  loadFromGist().then(() => { buildQueue(); showCurrentCard(); });
+} else {
+  buildQueue();
+  showCurrentCard();
+}
+</script>
+</body>
+</html>
